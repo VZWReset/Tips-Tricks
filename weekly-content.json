@@ -1,0 +1,48 @@
+[
+  {
+    "type": "tip",
+    "title": "Gebruik een Wachtwoordmanager",
+    "emoji": "🔑",
+    "content": "Het is onmogelijk om voor elke website een uniek en sterk wachtwoord te onthouden. Een wachtwoordmanager doet dit voor jou. Het onthoudt al je wachtwoorden, genereert sterke nieuwe en vult ze automatisch voor je in. Jij hoeft alleen het hoofdwachtwoord van de manager te onthouden."
+  },
+  {
+    "type": "video",
+    "title": "Herken een Phishing E-mail",
+    "emoji": "🎥",
+    "videoId": "E4bSA3a_iUI",
+    "description": "In deze video van Safeonweb leer je in een paar minuten de belangrijkste kenmerken van een phishing-bericht herkennen. Kennis die goud waard is!"
+  },
+  {
+    "type": "quiz",
+    "title": "Kennisquiz: Veilig Online",
+    "emoji": "❓",
+    "questions": [
+      {
+        "question": "Wat is de veiligste manier om verbinding te maken met een openbaar Wi-Fi netwerk (bv. in een koffiebar)?",
+        "options": [
+          "Gewoon verbinden, het is meestal wel veilig.",
+          "Alleen websites bezoeken die je kent.",
+          "Een VPN (Virtual Private Network) gebruiken.",
+          "Je Wi-Fi uitzetten en 4G/5G gebruiken."
+        ],
+        "answer": 2
+      },
+      {
+        "question": "Je krijgt een SMS'je dat er een pakketje voor je klaarligt, maar je moet eerst verzendkosten betalen via een link. Wat doe je?",
+        "options": [
+          "Op de link klikken en betalen, je verwacht inderdaad een pakketje.",
+          "Het bericht negeren en verwijderen. Dit is een bekende oplichtingstruc.",
+          "Het nummer bellen om te vragen om welk pakketje het gaat.",
+          "De link doorsturen naar een vriend om te vragen of het betrouwbaar is."
+        ],
+        "answer": 1
+      }
+    ]
+  },
+  {
+    "type": "tip",
+    "title": "Houd Software Up-to-date",
+    "emoji": "🔄",
+    "content": "Software-updates bevatten vaak belangrijke beveiligingspatches die kwetsbaarheden dichten. Stel updates niet uit, maar installeer ze zo snel mogelijk op je telefoon, computer en andere apparaten. Schakel automatische updates in waar mogelijk."
+  }
+]

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cybersecurity Wegwijzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .card {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            padding: 2rem;
+            transition: all 0.3s ease-in-out;
+        }
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #1f2937;
+        }
+         .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+        .option-btn {
+            width: 100%;
+            text-align: left;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+        .option-btn:hover {
+            background-color: #f3f4f6;
+            border-color: #2563eb;
+        }
+        .option-btn.selected {
+            background-color: #dbeafe;
+            border-color: #2563eb;
+        }
+        .option-btn.correct {
+            background-color: #dcfce7;
+            border-color: #22c55e;
+        }
+        .option-btn.incorrect {
+            background-color: #fee2e2;
+            border-color: #ef4444;
+        }
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            overflow: hidden;
+            max-width: 100%;
+            background: #000;
+            border-radius: 0.5rem;
+        }
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen p-4">
+    <div id="app-container" class="w-full max-w-md mx-auto">
+        <!-- Main screen -->
+        <div id="main-screen" class="card text-center">
+            <header class="mb-6">
+                <h1 class="text-3xl font-bold text-gray-900">Cybersecurity Wegwijzer</h1>
+                <p id="week-indicator" class="text-gray-600 mt-2">Jouw wekelijkse dosis digitale veiligheid.</p>
+            </header>
+            <div id="weekly-content-container"></div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="card hidden">
+            <h2 id="question-title" class="text-2xl font-bold mb-2 text-center">Quiz Vraag</h2>
+            <p id="question-counter" class="text-center text-gray-500 mb-6">Vraag 1 van X</p>
+            <p id="question-text" class="text-lg mb-6"></p>
+            <div id="options-container"></div>
+            <div id="feedback-container" class="mt-4 p-4 rounded-lg hidden"></div>
+            <button id="next-question-btn" class="btn btn-primary w-full mt-6 hidden">Volgende Vraag</button>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="card hidden text-center">
+            <h2 class="text-3xl font-bold mb-4">Quiz Voltooid!</h2>
+            <p class="text-lg mb-2">Jouw score:</p>
+            <p id="score-text" class="text-5xl font-bold text-blue-600 mb-6">X / Y</p>
+            <p id="score-feedback" class="text-gray-700 mb-8">Goed gedaan!</p>
+            <button id="restart-quiz-btn" class="btn btn-primary w-full hidden">Opnieuw proberen</button>
+            <button id="back-to-home-btn" class="btn btn-secondary w-full mt-4">Terug naar home</button>
+        </div>
+    </div>
+    <script>
+    let weeklyContent = [];
+    const startDate = new Date(2025, 6, 21); // 21 juli 2025
+
+    // Load weekly content from JSON file
+    async function loadContent() {
+        try {
+            const response = await fetch('weekly-content.json');
+            weeklyContent = await response.json();
+            displayWeeklyContent();
+        } catch (e) {
+            document.getElementById('weekly-content-container').innerHTML =
+                '<p class="text-red-500">Content kon niet geladen worden.</p>';
+        }
+    }
+
+    let currentQuizQuestions = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let selectedAnswer = null;
+
+    const mainScreen = document.getElementById('main-screen');
+    const quizScreen = document.getElementById('quiz-screen');
+    const resultsScreen = document.getElementById('results-screen');
+    const weekIndicator = document.getElementById('week-indicator');
+    const weeklyContentContainer = document.getElementById('weekly-content-container');
+    const questionCounter = document.getElementById('question-counter');
+    const questionText = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const feedbackContainer = document.getElementById('feedback-container');
+    const nextQuestionBtn = document.getElementById('next-question-btn');
+    const scoreText = document.getElementById('score-text');
+    const scoreFeedback = document.getElementById('score-feedback');
+    const restartQuizBtn = document.getElementById('restart-quiz-btn');
+    const backToHomeBtn = document.getElementById('back-to-home-btn');
+
+    function getWeekNumber() {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        startDate.setHours(0, 0, 0, 0);
+        if (now < startDate) return -1;
+        const diffTime = Math.abs(now - startDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return Math.floor(diffDays / 7);
+    }
+
+    function displayWeeklyContent() {
+        const weekIndex = getWeekNumber();
+        if (weekIndex < 0) {
+            weeklyContentContainer.innerHTML = `<p class="text-gray-600">De wekelijkse content is nog niet begonnen. Kom binnenkort terug!</p>`;
+            return;
+        }
+        if (weekIndex >= weeklyContent.length) {
+            weekIndicator.textContent = `Week ${weekIndex + 1}`;
+            weeklyContentContainer.innerHTML = `<p class="text-gray-600">Er is nog geen nieuwe content voor deze week. Kom later terug!</p>`;
+            return;
+        }
+        const content = weeklyContent[weekIndex];
+        weekIndicator.textContent = `Week ${weekIndex + 1}: ${content.title}`;
+        let html = `<h2 class="text-2xl font-bold mb-4 text-left">${content.emoji} ${content.title}</h2>`;
+        switch (content.type) {
+            case 'tip':
+                html += `<p class="text-left text-gray-700 leading-relaxed">${content.content}</p>`;
+                break;
+            case 'video':
+                html += `<p class="text-left text-gray-700 mb-4">${content.description}</p>`;
+                html += `
+                    <div class="video-container">
+                        <iframe 
+                            src="https://www.youtube.com/embed/${content.videoId}" 
+                            title="YouTube video player" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                        </iframe>
+                    </div>`;
+                break;
+            case 'quiz':
+                html += `<p class="text-left text-gray-700 mb-6">Test je kennis over het onderwerp van deze week. Ben je er klaar voor?</p>`;
+                html += `<button id="start-quiz-btn" class="btn btn-primary w-full">Start de Quiz!</button>`;
+                break;
+        }
+        weeklyContentContainer.innerHTML = html;
+        if (content.type === 'quiz') {
+            document.getElementById('start-quiz-btn').addEventListener('click', () => {
+                startQuiz(content.questions);
+            });
+        }
+    }
+
+    function showScreen(screenToShow) {
+        mainScreen.classList.add('hidden');
+        quizScreen.classList.add('hidden');
+        resultsScreen.classList.add('hidden');
+        screenToShow.classList.remove('hidden');
+    }
+
+    function startQuiz(questions) {
+        currentQuizQuestions = questions;
+        currentQuestionIndex = 0;
+        score = 0;
+        showScreen(quizScreen);
+        displayQuestion();
+    }
+
+    function displayQuestion() {
+        resetQuestionState();
+        const question = currentQuizQuestions[currentQuestionIndex];
+        questionCounter.textContent = `Vraag ${currentQuestionIndex + 1} van ${currentQuizQuestions.length}`;
+        questionText.textContent = question.question;
+        optionsContainer.innerHTML = '';
+        question.options.forEach((option, index) => {
+            const button = document.createElement('button');
+            button.className = 'option-btn';
+            button.textContent = option;
+            button.dataset.index = index;
+            button.addEventListener('click', handleOptionSelect);
+            optionsContainer.appendChild(button);
+        });
+    }
+
+    function resetQuestionState() {
+        selectedAnswer = null;
+        nextQuestionBtn.classList.add('hidden');
+        feedbackContainer.classList.add('hidden');
+        feedbackContainer.textContent = '';
+    }
+
+    function handleOptionSelect(event) {
+        if (selectedAnswer !== null) return;
+        selectedAnswer = parseInt(event.target.dataset.index);
+        const correctAnswer = currentQuizQuestions[currentQuestionIndex].answer;
+        const optionButtons = optionsContainer.querySelectorAll('.option-btn');
+        optionButtons.forEach(btn => btn.disabled = true);
+        const selectedButton = event.target;
+        selectedButton.classList.add('selected');
+        if (selectedAnswer === correctAnswer) {
+            score++;
+            selectedButton.classList.add('correct');
+            feedbackContainer.textContent = "Correct! Goed bezig.";
+            feedbackContainer.className = 'mt-4 p-4 rounded-lg text-green-800 bg-green-100';
+        } else {
+            selectedButton.classList.add('incorrect');
+            const correctButton = optionsContainer.querySelector(`[data-index='${correctAnswer}']`);
+            correctButton.classList.add('correct');
+            feedbackContainer.textContent = `Helaas, het juiste antwoord was: "${currentQuizQuestions[currentQuestionIndex].options[correctAnswer]}"`;
+            feedbackContainer.className = 'mt-4 p-4 rounded-lg text-red-800 bg-red-100';
+        }
+        feedbackContainer.classList.remove('hidden');
+        nextQuestionBtn.classList.remove('hidden');
+        if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+            nextQuestionBtn.textContent = 'Bekijk Resultaten';
+        } else {
+            nextQuestionBtn.textContent = 'Volgende Vraag';
+        }
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < currentQuizQuestions.length) {
+            displayQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        scoreText.textContent = `${score} / ${currentQuizQuestions.length}`;
+        let feedback = '';
+        const percentage = (score / currentQuizQuestions.length) * 100;
+        if (percentage === 100) {
+            feedback = "Perfecte score! Jij bent een echte cybersecurity-expert!";
+        } else if (percentage >= 70) {
+            feedback = "Uitstekend gedaan! Je bent goed op de hoogte.";
+        } else if (percentage >= 50) {
+            feedback = "Een mooie basis. Blijf leren om je kennis te vergroten.";
+        } else {
+            feedback = "Er is nog ruimte voor verbetering. De tips kunnen je helpen!";
+        }
+        scoreFeedback.textContent = feedback;
+        restartQuizBtn.classList.remove('hidden');
+        restartQuizBtn.onclick = () => startQuiz(currentQuizQuestions);
+        showScreen(resultsScreen);
+    }
+
+    function goHome() {
+        showScreen(mainScreen);
+        displayWeeklyContent();
+    }
+
+    nextQuestionBtn.addEventListener('click', nextQuestion);
+    backToHomeBtn.addEventListener('click', goHome);
+
+    window.addEventListener('load', loadContent);
+    </script>
+</body>
+</html>

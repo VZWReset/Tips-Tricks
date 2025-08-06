@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Cybersecurity Content</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .card { background: white; border-radius: 1rem; box-shadow: 0 2px 8px #ddd; padding: 2rem; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="card w-full max-w-xl">
+        <h1 class="text-2xl font-bold mb-4">Content Admin</h1>
+        <div id="content-list"></div>
+        <hr class="my-6">
+        <h2 class="text-xl font-bold mb-2">Nieuwe Content toevoegen</h2>
+        <form id="add-content-form" class="space-y-2">
+            <select id="type" class="border p-2 rounded w-full">
+                <option value="tip">Tip</option>
+                <option value="video">Video</option>
+                <option value="quiz">Quiz</option>
+            </select>
+            <input type="text" id="title" placeholder="Titel" class="border p-2 rounded w-full" required>
+            <input type="text" id="emoji" placeholder="Emoji" class="border p-2 rounded w-full" required>
+            <textarea id="content" placeholder="Tip of Videobeschrijving" class="border p-2 rounded w-full"></textarea>
+            <input type="text" id="videoId" placeholder="YouTube Video ID (voor Video)" class="border p-2 rounded w-full">
+            <textarea id="quizQuestions" placeholder='Quizvragen (JSON array)' class="border p-2 rounded w-full"></textarea>
+            <button type="submit" class="btn btn-primary bg-blue-600 text-white px-4 py-2 rounded">Toevoegen</button>
+        </form>
+    </div>
+    <script>
+    function getContent() {
+        const saved = localStorage.getItem('weeklyContent');
+        if (saved) return JSON.parse(saved);
+        return [];
+    }
+    function saveContent(list) {
+        localStorage.setItem('weeklyContent', JSON.stringify(list));
+    }
+    function renderList() {
+        const list = getContent();
+        const container = document.getElementById('content-list');
+        if (list.length === 0) {
+            container.innerHTML = '<p class="text-gray-500">Nog geen content.</p>';
+            return;
+        }
+        container.innerHTML = list.map((item, i) => `
+            <div class="my-2 p-2 border rounded flex justify-between items-center">
+                <div>
+                    <span class="text-xl">${item.emoji}</span>
+                    <span class="font-bold ml-2">${item.title}</span>
+                    <span class="text-sm ml-2 text-gray-600">${item.type}</span>
+                </div>
+                <button onclick="deleteItem(${i})" class="text-red-500">Verwijderen</button>
+            </div>
+        `).join('');
+    }
+    window.deleteItem = function(i) {
+        const list = getContent();
+        list.splice(i, 1);
+        saveContent(list);
+        renderList();
+    }
+    document.getElementById('add-content-form').addEventListener('submit', e => {
+        e.preventDefault();
+        const type = document.getElementById('type').value;
+        const title = document.getElementById('title').value;
+        const emoji = document.getElementById('emoji').value;
+        let newItem = { type, title, emoji };
+        if (type === 'tip') {
+            newItem.content = document.getElementById('content').value;
+        } else if (type === 'video') {
+            newItem.videoId = document.getElementById('videoId').value;
+            newItem.description = document.getElementById('content').value;
+        } else if (type === 'quiz') {
+            try {
+                newItem.questions = JSON.parse(document.getElementById('quizQuestions').value);
+            } catch {
+                alert('Quizvragen moeten in JSON-array formaat zijn!');
+                return;
+            }
+        }
+        const list = getContent();
+        list.push(newItem);
+        saveContent(list);
+        renderList();
+        e.target.reset();
+    });
+    renderList();
+    </script>
+</body>
+</html>
