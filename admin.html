@@ -8,6 +8,8 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         .card { background: white; border-radius: 1rem; box-shadow: 0 2px 8px #ddd; padding: 2rem; }
+        .move-btn { margin-left: 5px; padding: 2px 8px; border-radius: 5px; background: #e5e7eb; }
+        .move-btn:hover { background: #d1d5db; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
@@ -26,6 +28,7 @@
             <input type="text" id="emoji" placeholder="Emoji" class="border p-2 rounded w-full" required>
             <textarea id="content" placeholder="Tip of Videobeschrijving" class="border p-2 rounded w-full"></textarea>
             <input type="text" id="videoId" placeholder="YouTube Video ID (voor Video)" class="border p-2 rounded w-full">
+            <input type="text" id="videoUrl" placeholder="Video URL (voor SharePoint/mp4)" class="border p-2 rounded w-full">
             <textarea id="quizQuestions" placeholder='Quizvragen (JSON array)' class="border p-2 rounded w-full"></textarea>
             <button type="submit" class="btn btn-primary bg-blue-600 text-white px-4 py-2 rounded">Toevoegen</button>
         </form>
@@ -52,14 +55,28 @@
                     <span class="text-xl">${item.emoji}</span>
                     <span class="font-bold ml-2">${item.title}</span>
                     <span class="text-sm ml-2 text-gray-600">${item.type}</span>
+                    <span class="text-xs ml-2 text-gray-400">Week ${i+1}</span>
                 </div>
-                <button onclick="deleteItem(${i})" class="text-red-500">Verwijderen</button>
+                <div>
+                    <button class="move-btn" onclick="moveItem(${i}, -1)" ${i === 0 ? 'disabled' : ''} title="Omhoog">&#8593;</button>
+                    <button class="move-btn" onclick="moveItem(${i}, 1)" ${i === list.length-1 ? 'disabled' : ''} title="Omlaag">&#8595;</button>
+                    <button onclick="deleteItem(${i})" class="text-red-500 ml-2">Verwijderen</button>
+                </div>
             </div>
         `).join('');
     }
     window.deleteItem = function(i) {
         const list = getContent();
         list.splice(i, 1);
+        saveContent(list);
+        renderList();
+    }
+    window.moveItem = function(index, direction) {
+        const list = getContent();
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= list.length) return;
+        // Swap items
+        [list[index], list[newIndex]] = [list[newIndex], list[index]];
         saveContent(list);
         renderList();
     }
@@ -73,6 +90,7 @@
             newItem.content = document.getElementById('content').value;
         } else if (type === 'video') {
             newItem.videoId = document.getElementById('videoId').value;
+            newItem.videoUrl = document.getElementById('videoUrl').value;
             newItem.description = document.getElementById('content').value;
         } else if (type === 'quiz') {
             try {
